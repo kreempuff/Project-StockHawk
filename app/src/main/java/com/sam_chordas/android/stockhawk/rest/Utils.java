@@ -5,6 +5,8 @@ import android.util.Log;
 import com.sam_chordas.android.stockhawk.data.QuoteColumns;
 import com.sam_chordas.android.stockhawk.data.QuoteProvider;
 import java.util.ArrayList;
+import java.util.StringTokenizer;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -14,7 +16,8 @@ import org.json.JSONObject;
  */
 public class Utils {
 
-  private static String LOG_TAG = Utils.class.getSimpleName();
+    private static final String TAG = "Utils";
+    private static String LOG_TAG = Utils.class.getSimpleName();
 
   public static boolean showPercent = true;
 
@@ -30,6 +33,8 @@ public class Utils {
         if (count == 1){
           jsonObject = jsonObject.getJSONObject("results")
               .getJSONObject("quote");
+            String string = jsonObject.toString();
+//            Log.d(TAG, "quoteJsonToContentVals: " + string);
           batchOperations.add(buildBatchOperation(jsonObject));
         } else{
           resultsArray = jsonObject.getJSONObject("results").getJSONArray("quote");
@@ -42,6 +47,7 @@ public class Utils {
           }
         }
       }
+
     } catch (JSONException e){
       Log.e(LOG_TAG, "String to JSON failed: " + e);
     }

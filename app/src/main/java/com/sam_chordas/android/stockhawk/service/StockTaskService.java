@@ -32,6 +32,7 @@ public class StockTaskService extends GcmTaskService{
   private Context mContext;
   private StringBuilder mStoredSymbols = new StringBuilder();
   private boolean isUpdate;
+  private String TAG = getClass().getCanonicalName();
 
   public StockTaskService(){}
 
