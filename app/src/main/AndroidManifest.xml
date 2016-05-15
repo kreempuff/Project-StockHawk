@@ -29,7 +29,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.StockDetailActivity">
+        <activity android:name=".ui.StockDetailActivity"
+            android:parentActivityName=".ui.MyStocksActivity">
 
         </activity>
 

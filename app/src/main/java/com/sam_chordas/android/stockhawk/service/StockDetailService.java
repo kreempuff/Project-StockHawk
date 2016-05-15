@@ -77,6 +77,7 @@ public class StockDetailService extends IntentService {
         String finalUriString = finalUri.toString() + "&env=store://datatables.org/alltableswithkeys&callback=";
 
         try {
+            Log.i(TAG, "onHandleIntent: " + finalUriString);
             response = fetchData(finalUriString);
         } catch (IOException e) {
             e.printStackTrace();
@@ -88,12 +89,15 @@ public class StockDetailService extends IntentService {
         } else {
             JSONArray jsonResponse;
             try {
+                Log.i(TAG, "onHandleIntent: " + response);
                 jsonResponse = new JSONObject(response)
                         .getJSONObject("query")
                         .getJSONObject("results")
                         .getJSONArray("quote");
             } catch (JSONException e) {
                 e.printStackTrace();
+                Intent i = new Intent(StockDetailActivity.FAILED_FETCH);
+                LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(i);
                 return;
             }
             Intent i = new Intent(StockDetailActivity.SUCCESSFUL_FETCH);

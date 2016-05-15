@@ -10,4 +10,9 @@
   <string name="input_hint">FB</string>
   <string name="input_prefill"></string>
   <string name="network_toast">Uh-oh! This app requires an internet connection</string>
+  <string translatable="true" name="date_range_error">From Date can not be after To Date</string>
+  <string translatable="true" name="future_date_error">Can\'t predict the future of the stocks</string>
+  <string name="fetch_stocks">Get Stocks</string>
+  <string name="fetch_stocks_success_snackbar">Successful getting stocks</string>
+  <string name="fetch_stocks_error_snackbar">Failed to get stocks. Try Again Later</string>
 </resources>
