@@ -85,8 +85,6 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
     recyclerView.addOnItemTouchListener(new RecyclerViewItemClickListener(this,
             new RecyclerViewItemClickListener.OnItemClickListener() {
               @Override public void onItemClick(View v, int position) {
-                //TODO:
-                // do something on item click
                 String title = (String) ((TextView) v.findViewById(R.id.stock_symbol)).getText();
                 Intent intent = new Intent(getApplicationContext(), StockDetailActivity.class);
                 intent.putExtra("title", title);

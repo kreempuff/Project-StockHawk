@@ -105,7 +105,8 @@ public class StockDetailActivity extends AppCompatActivity implements View.OnCli
         }
 
         lineChart.setLogEnabled(true);
-        lineChart.setNoDataTextDescription("No data to display.");
+        lineChart.setNoDataTextDescription(getString(R.string.chart_no_data));
+        lineChart.setContentDescription(getString(R.string.chart_content_description));
 
 
         localReceiver = new LocalReceiver();
