@@ -34,20 +34,27 @@ public class ListWidgetService extends RemoteViewsService {
             return mIsUp;
         }
 
-        public void setmIsUp(int mIsUp) {
+        public Stock setmIsUp(int mIsUp) {
             this.mIsUp = mIsUp;
+            return this;
         }
 
         private int mIsUp;
 
         public Stock() {}
 
-        public void setmBidPrice(String mBidPrice) {
+        public Stock setmBidPrice(String mBidPrice) {
             this.mBidPrice = mBidPrice;
+            return this;
         }
 
-        public void setmSymbol(String mSymbol) {
+        public Stock setmSymbol(String mSymbol) {
             this.mSymbol = mSymbol;
+            return this;
+        }
+        public Stock setmChange(String mChange) {
+            this.mChange = mChange;
+            return this;
         }
 
         public String getmSymbol() {
@@ -58,9 +65,6 @@ public class ListWidgetService extends RemoteViewsService {
             return mChange;
         }
 
-        public void setmChange(String mChange) {
-            this.mChange = mChange;
-        }
 
         public String getmBidPrice() {
             return mBidPrice;
@@ -103,10 +107,10 @@ public class ListWidgetService extends RemoteViewsService {
             for (int i = 0; i < mCount; i++) {
                 if (!mCursor.moveToNext()) break;
                 stock = new Stock();
-                stock.setmBidPrice(mCursor.getString(mCursor.getColumnIndex(QuoteColumns.SYMBOL)));
-                stock.setmChange(mCursor.getString(mCursor.getColumnIndex(QuoteColumns.CHANGE)));
-                stock.setmBidPrice(mCursor.getString(mCursor.getColumnIndex(QuoteColumns.BIDPRICE)));
-                stock.setmIsUp(mCursor.getInt(mCursor.getColumnIndex(QuoteColumns.ISUP)));
+                stock.setmSymbol(mCursor.getString(mCursor.getColumnIndex(QuoteColumns.SYMBOL)))
+                        .setmChange(mCursor.getString(mCursor.getColumnIndex(QuoteColumns.CHANGE)))
+                        .setmBidPrice(mCursor.getString(mCursor.getColumnIndex(QuoteColumns.BIDPRICE)))
+                        .setmIsUp(mCursor.getInt(mCursor.getColumnIndex(QuoteColumns.ISUP)));
                 stocks.add(stock);
             }
             if (mCursor != null) {
@@ -163,6 +167,8 @@ public class ListWidgetService extends RemoteViewsService {
 
         @Override
         public int getViewTypeCount() {
+            //Indicates the number of views this factory returns
+            // Intializes to 0 which was giving some weird bugs
             return 1;
         }
 
