@@ -41,9 +41,6 @@ import java.util.Locale;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 
-/**
- * Created by kare2436 on 4/16/16.
- */
 public class StockDetailActivity extends AppCompatActivity implements View.OnClickListener, DatePickerDialog.OnDateSetListener {
 
 
@@ -121,6 +118,7 @@ public class StockDetailActivity extends AppCompatActivity implements View.OnCli
         fromDate.setOnClickListener(this);
         toDate.setOnClickListener(this);
         fetchButton.setOnClickListener(this);
+        fetchButton.setEnabled(false);
         startFetchDataService();
 
     }

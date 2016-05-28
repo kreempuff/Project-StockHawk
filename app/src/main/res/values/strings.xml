@@ -14,8 +14,13 @@
   <string translatable="true" name="future_date_error">Can\'t predict the future of the stocks</string>
   <string translatable="true" name="fetch_stocks">Get Stocks</string>
   <string translatable="true" name="fetch_stocks_success_snackbar">Successful getting stocks</string>
-  <string translatable="true" name="fetch_stocks_error_snackbar">Failed to get stocks. Try Again Later</string>
+  <string translatable="true" name="fetch_stocks_error_snackbar">Failed to get stock prices. Try Again Later</string>
   <string translatable="true" name="no_quotes_to_display">No Quotes to Display</string>
   <string translatable="true" name="chart_content_description">Line graph</string>
   <string translatable="true" name="chart_no_data">No data to display.</string>
+  <string translatable="true" name="add_a_new_stock">Add a new stock</string>
+  <string translatable="true" name="get_stocks">Get Stocks</string>
+  <string translatable="true" name="to">To</string>
+  <string translatable="true" name="from">From</string>
+  <string name="stock_doesnt_exist">Stock Does Not Exist</string>
 </resources>

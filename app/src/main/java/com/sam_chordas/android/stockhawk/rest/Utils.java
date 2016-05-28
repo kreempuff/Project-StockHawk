@@ -1,10 +1,14 @@
 package com.sam_chordas.android.stockhawk.rest;
 
 import android.content.ContentProviderOperation;
+import android.content.Context;
+import android.content.Intent;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import com.sam_chordas.android.stockhawk.data.QuoteColumns;
 import com.sam_chordas.android.stockhawk.data.QuoteProvider;
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.StringTokenizer;
 
 import org.json.JSONArray;
@@ -33,8 +37,11 @@ public class Utils {
         if (count == 1){
           jsonObject = jsonObject.getJSONObject("results")
               .getJSONObject("quote");
-            String string = jsonObject.toString();
-//            Log.d(TAG, "quoteJsonToContentVals: " + string);
+            String doesThisStockExist = jsonObject.getString("Bid");
+            if (doesThisStockExist.equals("null")) {
+              Log.d(TAG, "quoteJsonToContentVals: " + doesThisStockExist);
+              return null;
+            }
           batchOperations.add(buildBatchOperation(jsonObject));
         } else{
           resultsArray = jsonObject.getJSONObject("results").getJSONArray("quote");

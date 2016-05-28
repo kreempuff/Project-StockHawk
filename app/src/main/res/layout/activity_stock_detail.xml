@@ -15,7 +15,7 @@
         style="@style/StockSymbolTextStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:gravity="left|center_vertical"
+        android:gravity="start|center_vertical"
         tools:text="GOOG"
         />
     <LinearLayout
@@ -29,7 +29,7 @@
             android:layout_height="wrap_content">
             <android.support.design.widget.TextInputEditText
                 android:layout_width="match_parent"
-                android:hint="From"
+                android:hint="@string/from"
                 android:focusable="false"
                 android:id="@+id/from_date"
                 android:layout_height="wrap_content" />
@@ -41,7 +41,7 @@
             android:layout_height="wrap_content">
             <android.support.design.widget.TextInputEditText
                 android:layout_width="match_parent"
-                android:hint="To"
+                android:hint="@string/to"
                 android:id="@+id/to_date"
                 android:focusable="false"
                 android:layout_height="wrap_content" />
@@ -57,6 +57,7 @@
     <Button
         android:layout_width="wrap_content"
         android:id="@+id/fetch_button"
+        android:contentDescription="@string/get_stocks"
         android:layout_height="wrap_content"
         android:text="@string/fetch_stocks"/>
 
