@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.Loader;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.support.design.widget.Snackbar;
@@ -19,6 +20,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.text.InputType;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -39,8 +41,12 @@ import com.google.android.gms.gcm.PeriodicTask;
 import com.google.android.gms.gcm.Task;
 import com.melnykov.fab.FloatingActionButton;
 import com.sam_chordas.android.stockhawk.touch_helper.SimpleItemTouchHelperCallback;
+import com.squareup.okhttp.internal.Util;
+
+import java.io.IOException;
 
 public class MyStocksActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor>{
+  private static final String TAG = "MyStocksActivity";
 
   /**
    * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
@@ -58,6 +64,8 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
   private Cursor mCursor;
   boolean isConnected;
   private LocalReceiver localReceiver;
+  private RecyclerView recyclerView;
+  private View connectionErrorView;
 
   public static String FAILED_ADD = "FAILED_ADD";
 
@@ -65,28 +73,20 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     mContext = this;
-    ConnectivityManager cm =
-        (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-
-    NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-    isConnected = activeNetwork != null &&
-        activeNetwork.isConnectedOrConnecting();
-    setContentView(R.layout.activity_my_stocks);
-    // The intent service is for executing immediate pulls from the Yahoo API
-    // GCMTaskService can only schedule tasks, they cannot execute immediately
     mServiceIntent = new Intent(this, StockIntentService.class);
-    if (savedInstanceState == null){
-      // Run the initialize task service so that some stocks appear upon an empty database
-      mServiceIntent.putExtra("tag", "init");
-      if (isConnected){
-        startService(mServiceIntent);
-      } else{
-        networkToast();
-      }
-    }
-    RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+
+    isConnected = Utils.isOnline(mContext);
+
+    setContentView(R.layout.activity_my_stocks);
+
+
+    recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
     recyclerView.setLayoutManager(new LinearLayoutManager(this));
     getLoaderManager().initLoader(CURSOR_LOADER_ID, null, this);
+
+    if (savedInstanceState == null){
+
+    }
 
     mCursorAdapter = new QuoteCursorAdapter(this, null);
     recyclerView.addOnItemTouchListener(new RecyclerViewItemClickListener(this,
@@ -102,10 +102,12 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
     recyclerView.setAdapter(mCursorAdapter);
 
 
+    connectionErrorView = findViewById(R.id.no_connection_error_view);
     FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
     fab.attachToRecyclerView(recyclerView);
     fab.setOnClickListener(new View.OnClickListener() {
       @Override public void onClick(View v) {
+        isConnected = Utils.isOnline(mContext);
         if (isConnected){
           new MaterialDialog.Builder(mContext).title(R.string.symbol_search)
               .content(R.string.content_test)
@@ -173,14 +175,16 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
     getLoaderManager().restartLoader(CURSOR_LOADER_ID, null, this);
     IntentFilter intentFilter = new IntentFilter();
     intentFilter.addAction(FAILED_ADD);
+    intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+
     localReceiver = new LocalReceiver();
-    LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(localReceiver, intentFilter);
+    registerReceiver(localReceiver, intentFilter);
   }
 
   @Override
   protected void onPause() {
     super.onPause();
-    LocalBroadcastManager.getInstance(this).unregisterReceiver(localReceiver);
+    unregisterReceiver(localReceiver);
   }
 
   public void networkToast(){
@@ -227,7 +231,7 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
     // This narrows the return to only the stocks that are most current.
     return new CursorLoader(this, QuoteProvider.Quotes.CONTENT_URI,
         new String[]{ QuoteColumns._ID, QuoteColumns.SYMBOL, QuoteColumns.BIDPRICE,
-            QuoteColumns.PERCENT_CHANGE, QuoteColumns.CHANGE, QuoteColumns.ISUP},
+            QuoteColumns.PERCENT_CHANGE, QuoteColumns.CHANGE, QuoteColumns.ISUP, QuoteColumns.ISCURRENT},
         QuoteColumns.ISCURRENT + " = ?",
         new String[]{"1"},
         null);
@@ -237,6 +241,10 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
   public void onLoadFinished(Loader<Cursor> loader, Cursor data){
     mCursorAdapter.swapCursor(data);
     mCursor = data;
+    if (mCursor.getCount() == 0) {
+      initStocks();
+    }
+
   }
 
   @Override
@@ -247,7 +255,43 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
   private class LocalReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
-      Toast.makeText(context, R.string.stock_doesnt_exist, Toast.LENGTH_SHORT).show();
+      String action = intent.getAction();
+      if (action.equals(FAILED_ADD)) {
+        Toast.makeText(context, R.string.stock_doesnt_exist, Toast.LENGTH_SHORT).show();
+
+      } else if (action.equals(ConnectivityManager.CONNECTIVITY_ACTION)){
+        boolean stocksInitialized = getSharedPreferences(getString(R.string.app_name), MODE_PRIVATE)
+                .getBoolean(getString(R.string.init_stocks_preference), false);
+        if (!isConnected && !stocksInitialized) {
+          isConnected = Utils.isOnline(mContext);
+          initStocks();
+        }
+      }
+    }
+  }
+
+  private void initStocks() {
+    // The intent service is for executing immediate pulls from the Yahoo API
+    // GCMTaskService can only schedule tasks, they cannot execute immediately
+    mServiceIntent = new Intent(this, StockIntentService.class);
+    // Run the initialize task service so that some stocks appear upon an empty database
+    mServiceIntent.putExtra("tag", "init");
+    if (isConnected){
+      connectionErrorView.setVisibility(View.GONE);
+      recyclerView.setVisibility(View.VISIBLE);
+      startService(mServiceIntent);
+      getSharedPreferences(getString(R.string.app_name), MODE_PRIVATE)
+              .edit()
+              .putBoolean(getString(R.string.init_stocks_preference), true)
+              .apply();
+    } else {
+
+      if (connectionErrorView != null) {
+        recyclerView.setVisibility(View.INVISIBLE);
+        connectionErrorView.setVisibility(View.VISIBLE);
+      } else {
+        networkToast();
+      }
     }
   }
 }

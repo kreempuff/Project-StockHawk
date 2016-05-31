@@ -2,10 +2,12 @@ package com.sam_chordas.android.stockhawk.rest;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Build;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -47,6 +49,8 @@ public class QuoteCursorAdapter extends CursorRecyclerViewAdapter<QuoteCursorAda
   public void onBindViewHolder(final ViewHolder viewHolder, final Cursor cursor){
     viewHolder.symbol.setText(cursor.getString(cursor.getColumnIndex("symbol")));
     viewHolder.bidPrice.setText(cursor.getString(cursor.getColumnIndex("bid_price")));
+    int visibility = cursor.getInt(cursor.getColumnIndex(QuoteColumns.ISCURRENT)) == 1 ? View.INVISIBLE : View.VISIBLE;
+    viewHolder.outOfDate.setVisibility(visibility);
     int sdk = Build.VERSION.SDK_INT;
     if (cursor.getInt(cursor.getColumnIndex("is_up")) == 1){
       if (sdk < Build.VERSION_CODES.JELLY_BEAN){
@@ -89,12 +93,14 @@ public class QuoteCursorAdapter extends CursorRecyclerViewAdapter<QuoteCursorAda
     public final TextView symbol;
     public final TextView bidPrice;
     public final TextView change;
+    public final TextView outOfDate;
     public ViewHolder(View itemView){
       super(itemView);
       symbol = (TextView) itemView.findViewById(R.id.stock_symbol);
       symbol.setTypeface(robotoLight);
       bidPrice = (TextView) itemView.findViewById(R.id.bid_price);
       change = (TextView) itemView.findViewById(R.id.change);
+      outOfDate = (TextView) itemView.findViewById(R.id.out_of_date);
     }
 
     @Override

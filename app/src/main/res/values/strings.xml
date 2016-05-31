@@ -3,10 +3,10 @@
 
   <string name="action_example">Example action</string>
 
-  <string name="action_settings">Settings</string>
-  <string name="action_change_units">Change Units</string>
-  <string name="symbol_search">Symbol Search</string>
-  <string name="content_test">Search for a Stock Symbol</string>
+  <string translatable="true" name="action_settings">Settings</string>
+  <string translatable="true" name="action_change_units">Change Units</string>
+  <string translatable="true" name="symbol_search">Symbol Search</string>
+  <string translatable="true" name="content_test">Search for a Stock Symbol</string>
   <string name="input_hint">FB</string>
   <string name="input_prefill"></string>
   <string name="network_toast">Uh-oh! This app requires an internet connection</string>
@@ -22,5 +22,8 @@
   <string translatable="true" name="get_stocks">Get Stocks</string>
   <string translatable="true" name="to">To</string>
   <string translatable="true" name="from">From</string>
-  <string name="stock_doesnt_exist">Stock Does Not Exist</string>
+  <string translatable="true" name="stock_doesnt_exist">Stock Does Not Exist</string>
+  <string translatable="true" name="no_internet_connection">No Internet Connection. Please check your connection</string>
+  <string translatable="false" name="init_stocks_preference">STOCKS_INIT</string>
+  <string name="out_of_date">Out of date</string>
 </resources>

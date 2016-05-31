@@ -17,7 +17,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
-import android.widget.TextSwitcher;
 import android.widget.TextView;
 
 import com.github.mikephil.charting.charts.LineChart;
@@ -48,12 +47,13 @@ public class StockDetailActivity extends AppCompatActivity implements View.OnCli
     public static final String SUCCESSFUL_FETCH = "com.sam_chordas.android.stockhawk.SUCCESSFUL_DETAIL_FETCH";
     private static final String TAG = "StockDetailActivity";
 
-    private int HIGH_DATA_COLOR;
-    private int LOW_DATA_COLOR;
+    Context mContext;
     private String DATE_RANGE_ERROR_TEXT;
     private String FUTURE_DATE__ERROR_TEXT;
-    private final static float LINE_WIDTH = 2.0f;
-    private final static float CIRCLE_RADIUS = 4.5f;
+    private String fetchFormat = "yyyy-MM-dd";
+    private String displayFormat = "MMM dd, yyyy";
+    SimpleDateFormat displayFormatter = new SimpleDateFormat(displayFormat, Locale.US);
+    SimpleDateFormat fetchFormatter = new SimpleDateFormat(fetchFormat, Locale.US);
 
     private final int TO_DATE = 0;
     private final int FROM_DATE = 1;
@@ -64,9 +64,9 @@ public class StockDetailActivity extends AppCompatActivity implements View.OnCli
     @Bind(R.id.chart)
     LineChart lineChart;
     @Bind(R.id.from_date)
-    TextInputEditText fromDate;
+    TextInputEditText fromDateEditText;
     @Bind(R.id.to_date)
-    TextInputEditText toDate;
+    TextInputEditText toDateEditText;
     @Bind(R.id.fetch_button)
     Button fetchButton;
     @Bind(R.id.date_error)
@@ -91,6 +91,7 @@ public class StockDetailActivity extends AppCompatActivity implements View.OnCli
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mContext = this;
         setContentView(R.layout.activity_stock_detail);
         root = findViewById(R.id.root);
 
@@ -110,60 +111,66 @@ public class StockDetailActivity extends AppCompatActivity implements View.OnCli
 
         myCalendar = Calendar.getInstance();
         todayInMilli = System.currentTimeMillis();
-        HIGH_DATA_COLOR = ContextCompat.getColor(getApplicationContext(), R.color.material_blue_500);
-        LOW_DATA_COLOR = ContextCompat.getColor(getApplicationContext(), R.color.material_red_700);
         DATE_RANGE_ERROR_TEXT = getString(R.string.date_range_error);
         FUTURE_DATE__ERROR_TEXT = getString(R.string.future_date_error);
 
-        fromDate.setOnClickListener(this);
-        toDate.setOnClickListener(this);
+        fromDateEditText.setOnClickListener(this);
+        toDateEditText.setOnClickListener(this);
         fetchButton.setOnClickListener(this);
         fetchButton.setEnabled(false);
         startFetchDataService();
 
     }
 
+    private void setError(@Nullable TextInputEditText textInputEditText, String error) {
+        if (textInputEditText != null) {
+            textInputEditText.setError(error);
+        }
+        errorTextView.setVisibility(View.VISIBLE);
+        errorTextView.setText(error);
+    }
+
     private void updateLabel(TextInputEditText textInputEditText, int dateToUpdate) {
 
-        String myFormat = "MMM dd, yyyy"; //In which you need put here
-        String fetchFromat = "yyyy-MM-dd";
-        SimpleDateFormat sdf = new SimpleDateFormat(myFormat, Locale.US);
-        SimpleDateFormat fetchFormatter = new SimpleDateFormat(fetchFromat, Locale.US);
+        //Reset errors
         errorTextView.setVisibility(View.INVISIBLE);
-
         textInputEditText.setError(null);
-        textInputEditText.setText(sdf.format(myCalendar.getTime()));
+        //Put Date in input
+        textInputEditText.setText(displayFormatter.format(myCalendar.getTime()));
 
-        Log.i(TAG, "updateLabel: " + myCalendar.getTimeInMillis());
 
+        // If date range doesn't make logical sense or any date is beyond today
+        // Disable button
         if (dateToUpdate == FROM_DATE) {
             fromDateToFetch = fetchFormatter.format(myCalendar.getTime());
             fromDateToFetchInMilli = myCalendar.getTimeInMillis();
 
             if (todayInMilli < fromDateToFetchInMilli) {
-                errorTextView.setVisibility(View.VISIBLE);
-                errorTextView.setText(FUTURE_DATE__ERROR_TEXT);
-                textInputEditText.setError("Some Error");
+                setError(textInputEditText, FUTURE_DATE__ERROR_TEXT);
             } else if (toDateToFetchInMilli != 0L && fromDateToFetchInMilli > toDateToFetchInMilli) {
-                errorTextView.setVisibility(View.VISIBLE);
-                errorTextView.setText(DATE_RANGE_ERROR_TEXT);
-                textInputEditText.setError("Some Error");
+                setError(textInputEditText, DATE_RANGE_ERROR_TEXT);
             }
         } else if (dateToUpdate == TO_DATE) {
             toDateToFetch = fetchFormatter.format(myCalendar.getTime());
             toDateToFetchInMilli = myCalendar.getTimeInMillis();
+
             if (todayInMilli < toDateToFetchInMilli) {
-                errorTextView.setVisibility(View.VISIBLE);
-                errorTextView.setText(FUTURE_DATE__ERROR_TEXT);
-                textInputEditText.setError("Some Error");
+                setError(textInputEditText, FUTURE_DATE__ERROR_TEXT);
             } else if (fromDateToFetchInMilli != 0L && fromDateToFetchInMilli > toDateToFetchInMilli) {
-                errorTextView.setVisibility(View.VISIBLE);
-                errorTextView.setText(DATE_RANGE_ERROR_TEXT);
-                textInputEditText.setError("Some Error");
+                setError(textInputEditText, DATE_RANGE_ERROR_TEXT);
             }
         }
 
-        fetchButton.setEnabled(errorTextView.getVisibility() == View.INVISIBLE);
+        boolean enableButton = (errorTextView.getVisibility() == View.INVISIBLE)
+                && (fromDateEditText.getError() == null && toDateEditText.getError() == null);
+
+        if (fromDateEditText.getError() != null){
+            setError(null, (String) fromDateEditText.getError());
+        } else if (toDateEditText.getError() != null) {
+            setError(null, (String) toDateEditText.getError());
+        }
+
+        fetchButton.setEnabled(enableButton);
     }
 
     @Override
@@ -189,7 +196,7 @@ public class StockDetailActivity extends AppCompatActivity implements View.OnCli
         }
 
         viewBeingEdited = (TextInputEditText) v;
-        // TODO Auto-generated method stub
+
         new DatePickerDialog(this, StockDetailActivity.this, myCalendar
                 .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
                 myCalendar.get(Calendar.DAY_OF_MONTH)).show();
@@ -212,24 +219,30 @@ public class StockDetailActivity extends AppCompatActivity implements View.OnCli
         if (errorTextView.getVisibility() == View.VISIBLE) {
             return;
         }
-        String fromDate;
-        String toDate;
+        String fromDateForQuery;
+        String toDateForQuery;
         if (toDateToFetch == null) {
-            toDate = "2016-02-28";
+            Calendar calendar = Calendar.getInstance();
+            toDateForQuery = fetchFormatter.format(calendar.getTime());
+            toDateEditText.setText(displayFormatter.format(calendar.getTime()));
         } else {
-            toDate = toDateToFetch;
+            toDateForQuery = toDateToFetch;
         }
 
         if (fromDateToFetch == null) {
-            fromDate = "2016-02-01";
+            Calendar calendar = Calendar.getInstance();
+            long twoWeeksAgo = calendar.getTimeInMillis() - (1000 * 60 * 60 * 24 * 14);
+            calendar.setTimeInMillis(twoWeeksAgo);
+            fromDateForQuery = fetchFormatter.format(calendar.getTime());
+            fromDateEditText.setText(displayFormatter.format(calendar.getTime()));
         } else {
-            fromDate = fromDateToFetch;
+            fromDateForQuery = fromDateToFetch;
         }
 
         Intent intent = new Intent(this, StockDetailService.class);
         intent.putExtra("symbol", symbol);
-        intent.putExtra("start", fromDate);
-        intent.putExtra("end", toDate);
+        intent.putExtra("start", fromDateForQuery);
+        intent.putExtra("end", toDateForQuery);
 
         Snackbar.make(root, "Getting stocks", Snackbar.LENGTH_LONG).show();
 
@@ -263,6 +276,11 @@ public class StockDetailActivity extends AppCompatActivity implements View.OnCli
 
     private class FormatDataTask extends AsyncTask<JSONArray, Void, Void> {
 
+        private final float LINE_WIDTH = 2.0f;
+        private final float CIRCLE_RADIUS = 3.0f;
+        private final int HIGH_DATA_COLOR = ContextCompat.getColor(getApplicationContext(), R.color.material_blue_500);
+        private final int LOW_DATA_COLOR = ContextCompat.getColor(getApplicationContext(), R.color.material_red_700);
+
         /**
          * Sample data set
          * {"Symbol":"fb",
@@ -283,7 +301,7 @@ public class StockDetailActivity extends AppCompatActivity implements View.OnCli
             ArrayList<Entry> closes = new ArrayList<>();
             xVals = new ArrayList<>();
             sets = new ArrayList<>();
-            for (int index = 0; index < params[0].length(); index++) {
+            for (int index = (params[0].length() - 1); index > -1; index--) {
                 try {
                     temp = params[0].getJSONObject(index);
                     xVals.add(temp.getString("Date"));
@@ -301,8 +319,8 @@ public class StockDetailActivity extends AppCompatActivity implements View.OnCli
             LineDataSet linedataset1 = new LineDataSet(lows, "Lows");
             linedataset1.setAxisDependency(YAxis.AxisDependency.LEFT);
 
-            linedataset1.setLineWidth(2.0f);
-            linedataset1.setCircleRadius(4.5f);
+            linedataset1.setLineWidth(LINE_WIDTH);
+            linedataset1.setCircleRadius(CIRCLE_RADIUS);
 
             linedataset1.setColor(LOW_DATA_COLOR);
             linedataset1.setCircleColor(LOW_DATA_COLOR);

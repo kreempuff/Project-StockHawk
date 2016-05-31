@@ -3,10 +3,13 @@ package com.sam_chordas.android.stockhawk.rest;
 import android.content.ContentProviderOperation;
 import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import com.sam_chordas.android.stockhawk.data.QuoteColumns;
 import com.sam_chordas.android.stockhawk.data.QuoteProvider;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.StringTokenizer;
@@ -39,7 +42,6 @@ public class Utils {
               .getJSONObject("quote");
             String doesThisStockExist = jsonObject.getString("Bid");
             if (doesThisStockExist.equals("null")) {
-              Log.d(TAG, "quoteJsonToContentVals: " + doesThisStockExist);
               return null;
             }
           batchOperations.add(buildBatchOperation(jsonObject));
@@ -104,5 +106,35 @@ public class Utils {
       e.printStackTrace();
     }
     return builder.build();
+  }
+
+  public static boolean isOnline(Context context) {
+
+
+    if (!isConnectedOrConnecting(context)) {
+      return false;
+    }
+
+    Runtime runtime = Runtime.getRuntime();
+    // Pings googles public DNS to check if we actually have connectivity
+    try {
+
+      Process ipProcess = runtime.exec("/system/bin/ping -c 1 8.8.8.8");
+      int exitValue = ipProcess.waitFor();
+      return (exitValue == 0);
+
+    } catch (IOException | InterruptedException e) {
+      e.printStackTrace();
+    }
+
+    return false;
+  }
+
+  public static boolean isConnectedOrConnecting(Context context) {
+    ConnectivityManager cm =
+            (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+    return (cm.getActiveNetworkInfo() != null &&
+            cm.getActiveNetworkInfo().isConnectedOrConnecting());
   }
 }
